@@ -1,43 +1,31 @@
 # qr-inventory
-
-## Dependencies
-- [qr-core](https://github.com/QRCore-framework/qr-core)
-- [qr-logs](https://github.com/QRCore-framework/qr-logs) - For logging transfer and other history
-- [qr-traphouse](https://github.com/QRCore-framework/qr-traphouse) - Trap house system for QRCore
-- [qr-radio](https://github.com/QRCore-framework/qr-radio) - Radio system for communication
-- [qr-drugs](https://github.com/QRCore-framework/qr-drugs) -  Drugs and Weed Planting System
-- [qr-shops](https://github.com/QRCore-framework/qr-shops) - Needed in order to add shops
-
-## Screenshots
-![General](https://i.imgur.com/GR0MDFN.png)
-![ID Card](https://i.imgur.com/C6gAOWi.png)
-![Weapon](https://i.imgur.com/RbCvHJb.png)
-![Shop](https://i.imgur.com/7Da7UEX.png)
-![Crafting](https://i.imgur.com/peONaL9.png)
-![Glovebox](https://i.imgur.com/LjDEYWa.png)
-![Trunk](https://i.imgur.com/IoGYZbv.png)
+- Inventory System for QR-Core
 
 ## Features
-- Item crafting
-- Weapon attachment crafting
 - Stashes (Personal and/or Shared)
-- Vehicle Trunk & Glovebox
-- Weapon serial number
+- Inventory Hotbar
 - Shops
 - Item Drops
 
+## Dependencies
+- [qr-core](https://github.com/QRCore-RedM-Re/qr-core)
+- [qr-smallresources](https://github.com/QRCore-RedM-Re/qr-smallresources) - Logging item transfers and other interactions
+- [qr-shops](https://github.com/QRCore-RedM-Re/qr-shops) - Create shops
+
+## Screenshots
+![image](https://user-images.githubusercontent.com/101474430/232665287-27e6f830-58c4-4c66-9e06-6dc3a38de874.png)
+![image](https://user-images.githubusercontent.com/101474430/232665345-c4d96270-a6bf-4068-b20c-344d9b03a7ea.png)
+![image](https://user-images.githubusercontent.com/101474430/232665512-9484ce52-2389-4c27-85ca-934c83fe3c80.png)
+
 ## Installation
-### Manual
-- Download the script and put it in the `[qb]` directory.
+- Download the script and put it in the `[qr]` directory.
 - Import `qr-inventory.sql` in your database
 - Add the following code to your server.cfg/resouces.cfg
+
 ```
 ensure qr-core
-ensure qr-logs
+ensure qr-smallresources
 ensure qr-inventory
-ensure qr-traphouse
-ensure qr-radio
-ensure qr-drugs
 ensure qr-shops
 ```
 
@@ -54,5 +42,4 @@ Config.CleanupDropTime = 15 * 60 -- How many seconds it takes for drops to be un
 Config.MaxDropViewDistance = 12.5 -- The distance in GTA Units that a drop can be seen
 Config.UseItemDrop = false -- This will enable item object to spawn on drops instead of markers
 Config.ItemDropObject = `p_bag_leather_doctor` -- if Config.UseItemDrop is true, this will be the prop that spawns for the item
-
 ```
