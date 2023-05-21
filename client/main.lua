@@ -2,6 +2,7 @@
 
 local QRCore = exports['qr-core']:GetCoreObject()
 local PlayerData = QRCore.Functions.GetPlayerData()
+local Keys = QRCore.Shared.GetKey({ 'I', '1', '2', '3', '4', '5', 'Z' })
 local inInventory = false
 local currentOtherInventory = nil
 local Drops = {}
@@ -533,7 +534,7 @@ end)
 CreateThread(function()
     while true do
         Wait(0)
-        if IsControlJustReleased(0, QRCore.Shared.GetKey('I')) then -- key open inventory I
+        if IsControlJustReleased(0, Keys['I']) then -- key open inventory I
 			if not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
 				local ped = PlayerPedId()
 				if CurrentDrop ~= 0 then
@@ -550,43 +551,43 @@ end)
 CreateThread(function()
     while true do
         Wait(0)
-        DisableControlAction(0, QRCore.Shared.GetKey('1'))
-        DisableControlAction(0, QRCore.Shared.GetKey('2'))
-        DisableControlAction(0, QRCore.Shared.GetKey('3'))
-        DisableControlAction(0, QRCore.Shared.GetKey('4'))
-        DisableControlAction(0, QRCore.Shared.GetKey('5'))
-        DisableControlAction(0, QRCore.Shared.GetKey('Z'))
-        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('1')) and IsInputDisabled(0) then  -- 1  slot
+        DisableControlAction(0, Keys['1'])
+        DisableControlAction(0, Keys['2'])
+        DisableControlAction(0, Keys['3'])
+        DisableControlAction(0, Keys['4'])
+        DisableControlAction(0, Keys['5'])
+        DisableControlAction(0, Keys['Z'])
+        if IsDisabledControlPressed(0, Keys['1']) and IsInputDisabled(0) then  -- 1  slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 1)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('2')) and IsInputDisabled(0) then  -- 2 slot
+        if IsDisabledControlPressed(0, Keys['2']) and IsInputDisabled(0) then  -- 2 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 2)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('3')) and IsInputDisabled(0) then -- 3 slot
+        if IsDisabledControlPressed(0, Keys['3']) and IsInputDisabled(0) then -- 3 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 3)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('4')) and IsInputDisabled(0) then  -- 4 slot
+        if IsDisabledControlPressed(0, Keys['4']) and IsInputDisabled(0) then  -- 4 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 4)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('5')) and IsInputDisabled(0) then -- 5 slot
+        if IsDisabledControlPressed(0, Keys['5']) and IsInputDisabled(0) then -- 5 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 5)
 			end
         end
 
-        if IsDisabledControlJustPressed(0, QRCore.Shared.GetKey('Z')) and IsInputDisabled(0) then -- z  Hotbar
+        if IsDisabledControlJustPressed(0, Keys['Z']) and IsInputDisabled(0) then -- z  Hotbar
             isHotbar = not isHotbar
             ToggleHotbar(isHotbar)
         end
