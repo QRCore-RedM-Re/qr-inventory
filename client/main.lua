@@ -212,7 +212,7 @@ RegisterNetEvent('inventory:client:requiredItems', function(items, bool)
         for k in pairs(items) do
             itemTable[#itemTable+1] = {
                 item = items[k].name,
-                label = QRCore.Shared.Items[items[k].name]["label"],
+                label = QRCore.Shared.GetItem(items[k].name)["label"],
                 image = items[k].image,
             }
         end
@@ -369,7 +369,7 @@ RegisterNUICallback('Notify', function(data, cb)
 end)
 
 RegisterNUICallback('getCombineItem', function(data, cb)
-    cb(QRCore.Shared.Items[data.item])
+    cb(QRCore.Shared.GetItem(data.item))
 end)
 
 RegisterNUICallback("CloseInventory", function(_, cb)
@@ -533,7 +533,7 @@ end)
 CreateThread(function()
     while true do
         Wait(0)
-        if IsControlJustReleased(0, QRCore.Shared.Keybinds['I']) then -- key open inventory I
+        if IsControlJustReleased(0, QRCore.Shared.GetKey('I')) then -- key open inventory I
 			if not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
 				local ped = PlayerPedId()
 				if CurrentDrop ~= 0 then
@@ -550,43 +550,43 @@ end)
 CreateThread(function()
     while true do
         Wait(0)
-        DisableControlAction(0, QRCore.Shared.Keybinds['1'])
-        DisableControlAction(0, QRCore.Shared.Keybinds['2'])
-        DisableControlAction(0, QRCore.Shared.Keybinds['3'])
-        DisableControlAction(0, QRCore.Shared.Keybinds['4'])
-        DisableControlAction(0, QRCore.Shared.Keybinds['5'])
-        DisableControlAction(0, QRCore.Shared.Keybinds['Z'])
-        if IsDisabledControlPressed(0, QRCore.Shared.Keybinds['1']) and IsInputDisabled(0) then  -- 1  slot
+        DisableControlAction(0, QRCore.Shared.GetKey('1'))
+        DisableControlAction(0, QRCore.Shared.GetKey('2'))
+        DisableControlAction(0, QRCore.Shared.GetKey('3'))
+        DisableControlAction(0, QRCore.Shared.GetKey('4'))
+        DisableControlAction(0, QRCore.Shared.GetKey('5'))
+        DisableControlAction(0, QRCore.Shared.GetKey('Z'))
+        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('1')) and IsInputDisabled(0) then  -- 1  slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 1)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.Keybinds['2']) and IsInputDisabled(0) then  -- 2 slot
+        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('2')) and IsInputDisabled(0) then  -- 2 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 2)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.Keybinds['3']) and IsInputDisabled(0) then -- 3 slot
+        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('3')) and IsInputDisabled(0) then -- 3 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 3)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.Keybinds['4']) and IsInputDisabled(0) then  -- 4 slot
+        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('4')) and IsInputDisabled(0) then  -- 4 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 4)
 			end
         end
 
-        if IsDisabledControlPressed(0, QRCore.Shared.Keybinds['5']) and IsInputDisabled(0) then -- 5 slot
+        if IsDisabledControlPressed(0, QRCore.Shared.GetKey('5')) and IsInputDisabled(0) then -- 5 slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 5)
 			end
         end
 
-        if IsDisabledControlJustPressed(0, QRCore.Shared.Keybinds['Z']) and IsInputDisabled(0) then -- z  Hotbar
+        if IsDisabledControlJustPressed(0, QRCore.Shared.GetKey('Z')) and IsInputDisabled(0) then -- z  Hotbar
             isHotbar = not isHotbar
             ToggleHotbar(isHotbar)
         end

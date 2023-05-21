@@ -25,7 +25,7 @@ local function LoadInventory(source, citizenid)
 
 	for _, item in pairs(inventory) do
 		if item then
-			local itemInfo = QRCore.Shared.Items[item.name:lower()]
+			local itemInfo = QRCore.Shared.GetItem(item.name:lower())
 			if itemInfo then
 				loadedInventory[item.slot] = {
 					name = itemInfo['name'],
@@ -155,7 +155,7 @@ local function AddItem(source, item, amount, slot, info)
 	if not Player then return false end
 
 	local totalWeight = GetTotalWeight(Player.PlayerData.items)
-	local itemInfo = QRCore.Shared.Items[item:lower()]
+	local itemInfo = QRCore.Shared.GetItem(item:lower())
 	if not itemInfo and not Player.Offline then
 		QRCore.Functions.Notify(source, "Item does not exist", 'error')
 		return false
@@ -488,7 +488,7 @@ local function SetupShopItems(shopItems)
 	local items = {}
 	if shopItems and next(shopItems) then
 		for _, item in pairs(shopItems) do
-			local itemInfo = QRCore.Shared.Items[item.name:lower()]
+			local itemInfo = QRCore.Shared.GetItem(item.name:lower())
 			if itemInfo then
 				items[item.slot] = {
 					name = itemInfo["name"],
@@ -522,7 +522,7 @@ local function GetStashItems(stashId)
 	if not stashItems then return items end
 
 	for _, item in pairs(stashItems) do
-		local itemInfo = QRCore.Shared.Items[item.name:lower()]
+		local itemInfo = QRCore.Shared.GetItem(item.name:lower())
 		if itemInfo then
 			items[item.slot] = {
 				name = itemInfo["name"],
@@ -569,12 +569,12 @@ end
 ---@param info? table The info of the item
 local function AddToStash(stashId, slot, otherslot, itemName, amount, info)
 	amount = tonumber(amount) or 1
-	local ItemData = QRCore.Shared.Items[itemName]
+	local ItemData = QRCore.Shared.GetItem(itemName)
 	if not ItemData.unique then
 		if Stashes[stashId].items[slot] and Stashes[stashId].items[slot].name == itemName then
 			Stashes[stashId].items[slot].amount = Stashes[stashId].items[slot].amount + amount
 		else
-			local itemInfo = QRCore.Shared.Items[itemName:lower()]
+			local itemInfo = QRCore.Shared.GetItem(itemName:lower())
 			Stashes[stashId].items[slot] = {
 				name = itemInfo["name"],
 				amount = amount,
@@ -591,7 +591,7 @@ local function AddToStash(stashId, slot, otherslot, itemName, amount, info)
 		end
 	else
 		if Stashes[stashId].items[slot] and Stashes[stashId].items[slot].name == itemName then
-			local itemInfo = QRCore.Shared.Items[itemName:lower()]
+			local itemInfo = QRCore.Shared.GetItem(itemName:lower())
 			Stashes[stashId].items[otherslot] = {
 				name = itemInfo["name"],
 				amount = amount,
@@ -606,7 +606,7 @@ local function AddToStash(stashId, slot, otherslot, itemName, amount, info)
 				slot = otherslot,
 			}
 		else
-			local itemInfo = QRCore.Shared.Items[itemName:lower()]
+			local itemInfo = QRCore.Shared.GetItem(itemName:lower())
 			Stashes[stashId].items[slot] = {
 				name = itemInfo["name"],
 				amount = amount,
@@ -657,7 +657,7 @@ local function AddToDrop(dropId, slot, itemName, amount, info)
 	if Drops[dropId].items[slot] and Drops[dropId].items[slot].name == itemName then
 		Drops[dropId].items[slot].amount = Drops[dropId].items[slot].amount + amount
 	else
-		local itemInfo = QRCore.Shared.Items[itemName:lower()]
+		local itemInfo = QRCore.Shared.GetItem(itemName:lower())
 		Drops[dropId].items[slot] = {
 			name = itemInfo["name"],
 			amount = amount,
@@ -730,7 +730,7 @@ local function CreateNewDrop(source, fromSlot, toSlot, itemAmount)
 	local coords = GetEntityCoords(GetPlayerPed(source))
 	if RemoveItem(source, itemData.name, itemAmount, itemData.slot) then
 		TriggerClientEvent("inventory:client:CheckWeapon", source, itemData.name)
-		local itemInfo = QRCore.Shared.Items[itemData.name:lower()]
+		local itemInfo = QRCore.Shared.GetItem(itemData.name:lower())
 		local dropId = CreateDropId()
 		Drops[dropId] = {}
 		Drops[dropId].coords = coords
@@ -852,12 +852,12 @@ RegisterNetEvent('inventory:server:combineItem', function(item, fromItem, toItem
 	if toItem == nil then return end
 
 	-- Check the recipe is valid
-	local recipe = QRCore.Shared.Items[toItem.name].combinable
+	local recipe = QRCore.Shared.GetItem(toItem.name).combinable
 
 	if recipe and recipe.reward ~= item then return end
 	if not recipeContains(recipe, fromItem) then return end
 
-	TriggerClientEvent('inventory:client:ItemBox', src, QRCore.Shared.Items[item], 'add')
+	TriggerClientEvent('inventory:client:ItemBox', src, QRCore.Shared.GetItem(item), 'add')
 	AddItem(src, item, 1)
 	RemoveItem(src, fromItem.name, 1)
 	RemoveItem(src, toItem.name, 1)
@@ -1003,7 +1003,7 @@ RegisterNetEvent('inventory:server:UseItemSlot', function(slot)
 	local src = source
 	local itemData = GetItemBySlot(src, slot)
 	if not itemData then return end
-	local itemInfo = QRCore.Shared.Items[itemData.name]
+	local itemInfo = QRCore.Shared.GetItem(itemData.name)
 	if itemData.type == "weapon" then
 		TriggerClientEvent("qr-weapons:client:UseWeapon", src, itemData, itemData.info.quality and itemData.info.quality > 0)
 		TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, "use")
@@ -1018,7 +1018,7 @@ RegisterNetEvent('inventory:server:UseItem', function(inventory, item)
 	if inventory ~= "player" and inventory ~= "hotbar" then return end
 	local itemData = GetItemBySlot(src, item.slot)
 	if not itemData then return end
-	local itemInfo = QRCore.Shared.Items[itemData.name]
+	local itemInfo = QRCore.Shared.GetItem(itemData.name)
 	if itemData.type == "weapon" then
 		TriggerClientEvent("qr-weapons:client:UseWeapon", src, itemData, itemData.info.quality and itemData.info.quality > 0)
 		TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, "use")
@@ -1065,7 +1065,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				--Player.PlayerData.items[toSlot] = fromItemData
 				if toItemData then
 					--Player.PlayerData.items[fromSlot] = toItemData
-					local itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+					local itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 					toAmount = tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
 						RemoveItem(playerId, itemInfo["name"], toAmount, fromSlot)
@@ -1073,10 +1073,10 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 						TriggerEvent("qr-log:server:CreateLog", "robbing", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | *"..src.."*) swapped item; name: **"..itemInfo["name"].."**, amount: **" .. toAmount .. "** with name: **" .. fromItemData.name .. "**, amount: **" .. fromAmount.. "** with player: **".. GetPlayerName(OtherPlayer.PlayerData.source) .. "** (citizenid: *"..OtherPlayer.PlayerData.citizenid.."* | id: *"..OtherPlayer.PlayerData.source.."*)")
 					end
 				else
-					local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+					local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 					TriggerEvent("qr-log:server:CreateLog", "robbing", "Dropped Item", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | *"..src.."*) dropped new item; name: **"..itemInfo["name"].."**, amount: **" .. fromAmount .. "** to player: **".. GetPlayerName(OtherPlayer.PlayerData.source) .. "** (citizenid: *"..OtherPlayer.PlayerData.citizenid.."* | id: *"..OtherPlayer.PlayerData.source.."*)")
 				end
-				local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+				local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 				AddItem(playerId, itemInfo["name"], fromAmount, toSlot, fromItemData.info)
 			elseif QRCore.Shared.SplitStr(toInventory, "-")[1] == "stash" then
 				local stashId = QRCore.Shared.SplitStr(toInventory, "-")[2]
@@ -1086,7 +1086,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				--Player.PlayerData.items[toSlot] = fromItemData
 				if toItemData then
 					--Player.PlayerData.items[fromSlot] = toItemData
-					local itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+					local itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 					toAmount = tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
 						--RemoveFromStash(stashId, fromSlot, itemInfo["name"], toAmount)
@@ -1095,10 +1095,10 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 						TriggerEvent("qr-log:server:CreateLog", "stash", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..itemInfo["name"].."**, amount: **" .. toAmount .. "** with name: **" .. fromItemData.name .. "**, amount: **" .. fromAmount .. "** - stash: *" .. stashId .. "*")
 					end
 				else
-					local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+					local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 					TriggerEvent("qr-log:server:CreateLog", "stash", "Dropped Item", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) dropped new item; name: **"..itemInfo["name"].."**, amount: **" .. fromAmount .. "** - stash: *" .. stashId .. "*")
 				end
-				local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+				local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 				AddToStash(stashId, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info)
 			else
 				-- drop
@@ -1110,7 +1110,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 					RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
 					TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
 					if toItemData then
-						local itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+						local itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 						toAmount = tonumber(toAmount) or toItemData.amount
 						if toItemData.name ~= fromItemData.name then
 							AddItem(src, toItemData.name, toAmount, fromSlot, toItemData.info)
@@ -1118,10 +1118,10 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 							TriggerEvent("qr-log:server:CreateLog", "drop", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..itemInfo["name"].."**, amount: **" .. toAmount .. "** with name: **" .. fromItemData.name .. "**, amount: **" .. fromAmount .. "** - dropid: *" .. toInventory .. "*")
 						end
 					else
-						local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+						local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 						TriggerEvent("qr-log:server:CreateLog", "drop", "Dropped Item", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) dropped new item; name: **"..itemInfo["name"].."**, amount: **" .. fromAmount .. "** - dropid: *" .. toInventory .. "*")
 					end
-					local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+					local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 					AddToDrop(toInventory, toSlot, itemInfo["name"], fromAmount, fromItemData.info)
 					if itemInfo["name"] == "radio" then
 						TriggerClientEvent('Radio.Set', src, false)
@@ -1137,13 +1137,13 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 		local fromItemData = OtherPlayer.PlayerData.items[fromSlot]
 		fromAmount = tonumber(fromAmount) or fromItemData.amount
 		if fromItemData and fromItemData.amount >= fromAmount then
-			local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+			local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 			if toInventory == "player" or toInventory == "hotbar" then
 				local toItemData = GetItemBySlot(src, toSlot)
 				RemoveItem(playerId, itemInfo["name"], fromAmount, fromSlot)
 				TriggerClientEvent("inventory:client:CheckWeapon", OtherPlayer.PlayerData.source, fromItemData.name)
 				if toItemData then
-					itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+					itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 					toAmount = tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
 						RemoveItem(src, toItemData.name, toAmount, toSlot)
@@ -1162,12 +1162,12 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 					--Player.PlayerData.items[fromSlot] = toItemData
 					toAmount = tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
-						itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+						itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 						RemoveItem(playerId, itemInfo["name"], toAmount, toSlot)
 						AddItem(playerId, itemInfo["name"], toAmount, fromSlot, toItemData.info)
 					end
 				end
-				itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+				itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 				AddItem(playerId, itemInfo["name"], fromAmount, toSlot, fromItemData.info)
 			end
 		else
@@ -1178,12 +1178,12 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 		local fromItemData = Stashes[stashId].items[fromSlot]
 		fromAmount = tonumber(fromAmount) or fromItemData.amount
 		if fromItemData and fromItemData.amount >= fromAmount then
-			local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+			local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 			if toInventory == "player" or toInventory == "hotbar" then
 				local toItemData = GetItemBySlot(src, toSlot)
 				RemoveFromStash(stashId, fromSlot, itemInfo["name"], fromAmount)
 				if toItemData then
-					itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+					itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 					toAmount = tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
 						RemoveItem(src, toItemData.name, toAmount, toSlot)
@@ -1205,12 +1205,12 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 					--Player.PlayerData.items[fromSlot] = toItemData
 					toAmount = tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
-						itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+						itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 						RemoveFromStash(stashId, toSlot, itemInfo["name"], toAmount)
 						AddToStash(stashId, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info)
 					end
 				end
-				itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+				itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 				AddToStash(stashId, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info)
 			end
 		else
@@ -1219,7 +1219,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 	elseif QRCore.Shared.SplitStr(fromInventory, "-")[1] == "itemshop" then
 		local shopType = QRCore.Shared.SplitStr(fromInventory, "-")[2]
 		local itemData = ShopItems[shopType].items[fromSlot]
-		local itemInfo = QRCore.Shared.Items[itemData.name:lower()]
+		local itemInfo = QRCore.Shared.GetItem(itemData.name:lower())
 		local bankBalance = Player.PlayerData.money["bank"]
 		local price = tonumber((itemData.price*fromAmount))
 
@@ -1289,14 +1289,14 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 		local fromItemData = Drops[fromInventory].items[fromSlot]
 		fromAmount = tonumber(fromAmount) or fromItemData.amount
 		if fromItemData and fromItemData.amount >= fromAmount then
-			local itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+			local itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 			if toInventory == "player" or toInventory == "hotbar" then
 				local toItemData = GetItemBySlot(src, toSlot)
 				RemoveFromDrop(fromInventory, fromSlot, itemInfo["name"], fromAmount)
 				if toItemData then
 					toAmount = tonumber(toAmount) and tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
-						itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+						itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 						RemoveItem(src, toItemData.name, toAmount, toSlot)
 						AddToDrop(fromInventory, toSlot, itemInfo["name"], toAmount, toItemData.info)
 						if itemInfo["name"] == "radio" then
@@ -1319,7 +1319,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 					--Player.PlayerData.items[fromSlot] = toItemData
 					toAmount = tonumber(toAmount) or toItemData.amount
 					if toItemData.name ~= fromItemData.name then
-						itemInfo = QRCore.Shared.Items[toItemData.name:lower()]
+						itemInfo = QRCore.Shared.GetItem(toItemData.name:lower())
 						RemoveFromDrop(toInventory, toSlot, itemInfo["name"], toAmount)
 						AddToDrop(fromInventory, fromSlot, itemInfo["name"], toAmount, toItemData.info)
 						if itemInfo["name"] == "radio" then
@@ -1327,7 +1327,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 						end
 					end
 				end
-				itemInfo = QRCore.Shared.Items[fromItemData.name:lower()]
+				itemInfo = QRCore.Shared.GetItem(fromItemData.name:lower())
 				AddToDrop(toInventory, toSlot, itemInfo["name"], fromAmount, fromItemData.info)
 				if itemInfo["name"] == "radio" then
 					TriggerClientEvent('Radio.Set', src, false)
@@ -1364,10 +1364,10 @@ RegisterServerEvent("inventory:server:GiveItem", function(target, name, amount, 
 		end
 		if RemoveItem(src, item.name, amount, item.slot) then
 			if AddItem(target, item.name, amount, false, item.info) then
-				TriggerClientEvent('inventory:client:ItemBox',target, QRCore.Shared.Items[item.name], "add")
+				TriggerClientEvent('inventory:client:ItemBox',target, QRCore.Shared.GetItem(item.name), "add")
 				QRCore.Functions.Notify(target, Lang:t("notify.gitemrec")..amount..' '..item.label..Lang:t("notify.gitemfrom")..Player.PlayerData.charinfo.firstname.." "..Player.PlayerData.charinfo.lastname)
 				TriggerClientEvent("inventory:client:UpdatePlayerInventory", target, true)
-				TriggerClientEvent('inventory:client:ItemBox',src, QRCore.Shared.Items[item.name], "remove")
+				TriggerClientEvent('inventory:client:ItemBox',src, QRCore.Shared.GetItem(item.name), "remove")
 				QRCore.Functions.Notify(src, Lang:t("notify.gitemyg") .. OtherPlayer.PlayerData.charinfo.firstname.." "..OtherPlayer.PlayerData.charinfo.lastname.. " " .. amount .. " " .. item.label .."!")
 				TriggerClientEvent("inventory:client:UpdatePlayerInventory", src, true)
 				TriggerClientEvent('qr-inventory:client:giveAnim', src)
@@ -1471,7 +1471,7 @@ QRCore.Commands.Add("giveitem", "Give An Item (Admin Only)", {{name="id", help="
 	local id = tonumber(args[1])
 	local Player = QRCore.Functions.GetPlayer(id)
 	local amount = tonumber(args[3]) or 1
-	local itemData = QRCore.Shared.Items[tostring(args[2]):lower()]
+	local itemData = QRCore.Shared.GetItem(tostring(args[2]):lower())
 	if Player then
 			if itemData then
 				-- check iteminfo
@@ -1506,8 +1506,8 @@ end, "admin")
 
 QRCore.Commands.Add("randomitems", "Give Random Items (God Only)", {}, false, function(source, _)
 	local filteredItems = {}
-	for k, v in pairs(QRCore.Shared.Items) do
-		if QRCore.Shared.Items[k]["type"] ~= "weapon" then
+	for k, v in pairs(QRCore.Shared.GetItems()) do
+		if QRCore.Shared.GetItem(k)["type"] ~= "weapon" then
 			filteredItems[#filteredItems+1] = v
 		end
 	end
@@ -1518,7 +1518,7 @@ QRCore.Commands.Add("randomitems", "Give Random Items (God Only)", {}, false, fu
 			amount = 1
 		end
 		if AddItem(source, randitem["name"], amount) then
-			TriggerClientEvent('inventory:client:ItemBox', source, QRCore.Shared.Items[randitem["name"]], 'add')
+			TriggerClientEvent('inventory:client:ItemBox', source, QRCore.Shared.GetItem(randitem["name"]), 'add')
             Wait(500)
 		end
 	end
