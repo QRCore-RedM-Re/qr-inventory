@@ -2,7 +2,7 @@
 
 local QRCore = exports['qr-core']:GetCoreObject()
 local PlayerData = QRCore.Functions.GetPlayerData()
-local Keys = QRCore.Shared.GetKey({ 'I', '1', '2', '3', '4', '5', 'Z' })
+local Keys = QRCore.Shared.GetKeys({ 'I', '1', '2', '3', '4', '5', 'Z' })
 local inInventory = false
 local currentOtherInventory = nil
 local Drops = {}
