@@ -5,9 +5,9 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 description 'qr-Inventory'
 
 shared_scripts {
+    '@ox_lib/init.lua',
     '@qr-core/shared/locale.lua',
     'locales/en.lua',
-    'locales/*.lua',
     'config.lua'
 }
 
@@ -17,9 +17,7 @@ server_scripts {
 }
 client_script 'client/main.lua'
 
-ui_page {
-    'html/ui.html'
-}
+ui_page { 'html/ui.html' }
 
 files {
     'html/ui.html',

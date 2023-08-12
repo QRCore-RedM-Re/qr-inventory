@@ -52,17 +52,6 @@ end
 
 exports("HasItem", HasItem)
 
----Load an animation dictionary before playing an animation from it
----@param dict string Animation dictionary to load
-local function LoadAnimDict(dict)
-    if HasAnimDictLoaded(dict) then return end
-
-    RequestAnimDict(dict)
-    while not HasAnimDictLoaded(dict) do
-        Wait(10)
-    end
-end
-
 ---Closes the inventory NUI
 local function closeInventory()
     SendNUIMessage({
@@ -98,8 +87,13 @@ end
 
 ---Plays the opening animation of the inventory
 local function openAnim()
-    LoadAnimDict('pickup_object')
-    TaskPlayAnim(PlayerPedId(),'pickup_object', 'putdown_low', 5.0, 1.5, 1.0, 48, 0.0, 0, 0, 0)
+    lib.requestAnimDict('script_camp@cash_box')
+    TaskPlayAnim(cache.ped,'script_camp@cash_box', 'open_satchel', 5.0, 1.5, 1.0, 48, 0.0, 0, 0, 0)
+    if CurrentDrop ~= 0 then
+        TriggerServerEvent("inventory:server:OpenInventory", "drop", CurrentDrop)
+    else
+        TriggerServerEvent("inventory:server:OpenInventory")
+    end
 end
 
 ---Removes drops in the area of the client
@@ -108,9 +102,7 @@ local function RemoveNearbyDrop(index)
     if not DropsNear[index] then return end
 
     local dropItem = DropsNear[index].object
-    if DoesEntityExist(dropItem) then
-        DeleteEntity(dropItem)
-    end
+    if DoesEntityExist(dropItem) then DeleteEntity(dropItem) end
 
     DropsNear[index] = nil
 
@@ -130,6 +122,7 @@ end
 ---Creates a new item drop object on the ground
 ---@param index integer The drop id to save the object in
 local function CreateItemDrop(index)
+    lib.requestModel(Config.ItemDropObject)
     local dropItem = CreateObject(Config.ItemDropObject, DropsNear[index].coords.x, DropsNear[index].coords.y, DropsNear[index].coords.z, false, false, false)
     DropsNear[index].object = dropItem
     DropsNear[index].isDropShowing = true
@@ -154,33 +147,6 @@ end
 --#endregion Functions
 
 --#region Events
-
-RegisterNetEvent('QRCore:Client:OnPlayerLoaded', function()
-    LocalPlayer.state:set("inv_busy", false, true)
-    PlayerData = QRCore.Functions.GetPlayerData()
-    QRCore.Functions.TriggerCallback("inventory:server:GetCurrentDrops", function(theDrops)
-		Drops = theDrops
-    end)
-end)
-
-RegisterNetEvent('QRCore:Client:OnPlayerUnload', function()
-    LocalPlayer.state:set("inv_busy", true, true)
-    PlayerData = {}
-    RemoveAllNearbyDrops()
-end)
-
-RegisterNetEvent('QRCore:Client:UpdateObject', function()
-    QRCore = exports['qr-core']:GetCoreObject()
-end)
-
-RegisterNetEvent('QRCore:Player:SetPlayerData', function(val)
-    PlayerData = val
-end)
-
-AddEventHandler('onResourceStop', function(name)
-    if name ~= GetCurrentResourceName() then return end
-    if Config.UseItemDrop then RemoveAllNearbyDrops() end
-end)
 
 RegisterNetEvent("qr-inventory:client:closeinv", function()
     closeInventory()
@@ -234,7 +200,7 @@ RegisterNetEvent('inventory:server:RobPlayer', function(TargetId)
 end)
 
 RegisterNetEvent('inventory:client:OpenInventory', function(PlayerAmmo, inventory, other)
-    if not IsEntityDead(PlayerPedId()) then
+    if not IsEntityDead(cache.ped) then
         ToggleHotbar(false)
         SetNuiFocus(true, true)
         if other then
@@ -267,6 +233,7 @@ end)
 RegisterNetEvent('inventory:client:AddDropItem', function(dropId, player, coords)
     local forward = GetEntityForwardVector(GetPlayerPed(GetPlayerFromServerId(player)))
     local x, y, z = table.unpack(coords + forward * 0.5)
+
     Drops[dropId] = {
         id = dropId,
         coords = {
@@ -287,17 +254,12 @@ RegisterNetEvent('inventory:client:RemoveDropItem', function(dropId)
 end)
 
 RegisterNetEvent('inventory:client:DropItemAnim', function()
-    local ped = PlayerPedId()
-    SendNUIMessage({
-        action = "close",
-    })
+    local ped = cache.ped
     local dict = "amb_camp@world_camp_jack_throw_rocks_casual@male_a@idle_a"
-    RequestAnimDict(dict)
-    while not HasAnimDictLoaded(dict) do
-        Wait(10)
-    end
+    SendNUIMessage({ action = "close" })
+    lib.requestAnimDict(dict)
     TaskPlayAnim(ped, dict, "idle_a", 1.0, 8.0, -1, 1, 0, false, false, false)
-    Wait(1200)
+    Wait(1500)
     ClearPedTasks(ped)
 end)
 
@@ -306,56 +268,12 @@ RegisterNetEvent('inventory:client:SetCurrentStash', function(stash)
 end)
 
 RegisterNetEvent('qr-inventory:client:giveAnim', function()
-    if IsPedInAnyVehicle(PlayerPedId(), false) then
-	return
-    else
-	LoadAnimDict('mp_common')
-	TaskPlayAnim(PlayerPedId(), 'mp_common', 'givetake1_b', 8.0, 1.0, -1, 16, 0, 0, 0, 0)
-    end
+    if IsPedInAnyVehicle(cache.ped, false) then return end
+    lib.requestAnimDict('mp_common')
+	TaskPlayAnim(cache.ped, 'mp_common', 'givetake1_b', 8.0, 1.0, -1, 16, 0, 0, 0, 0)
 end)
 
 --#endregion Events
-
---#region Commands
-
-RegisterCommand('closeinv', function()
-    closeInventory()
-end, false)
-
-RegisterCommand('inventory', function()
-    if not inInventory then
-        if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
-            local ped = PlayerPedId()
-			openAnim()
-			TriggerServerEvent("inventory:server:OpenInventory")
-        end
-    end
-end, false)
-
-RegisterKeyMapping('inventory', Lang:t("inf_mapping.opn_inv"), 'keyboard', 'TAB')
-
-RegisterCommand('hotbar', function()
-    isHotbar = not isHotbar
-    if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
-        ToggleHotbar(isHotbar)
-    end
-end, false)
-
-RegisterKeyMapping('hotbar', Lang:t("inf_mapping.tog_slots"), 'keyboard', 'z')
-
-for i = 1, 6 do
-    RegisterCommand('slot' .. i,function()
-        if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
-            if i == 6 then
-                i = Config.MaxInventorySlots
-            end
-            TriggerServerEvent("inventory:server:UseItemSlot", i)
-        end
-    end, false)
-    RegisterKeyMapping('slot' .. i, Lang:t("inf_mapping.use_item") .. i, 'keyboard', i)
-end
-
---#endregion Commands
 
 --#region NUI
 
@@ -379,7 +297,7 @@ RegisterNUICallback("CloseInventory", function(_, cb)
         CurrentStash = nil
         SetNuiFocus(false, false)
         inInventory = false
-        ClearPedTasks(PlayerPedId())
+        ClearPedTasks(cache.ped)
         return
     end
     if CurrentStash ~= nil then
@@ -406,7 +324,7 @@ RegisterNUICallback("combineItem", function(data, cb)
 end)
 
 RegisterNUICallback('combineWithAnim', function(data, cb)
-    local ped = PlayerPedId()
+    local ped = cache.ped
     local combineData = data.combineData
     local aDict = combineData.anim.dict
     local aLib = combineData.anim.lib
@@ -447,11 +365,11 @@ RegisterNUICallback("PlayDropFail", function(_, cb)
 end)
 
 RegisterNUICallback("GiveItem", function(data, cb)
-    local player, distance = QRCore.Functions.GetClosestPlayer(GetEntityCoords(PlayerPedId()))
+    local player, distance = QRCore.Functions.GetClosestPlayer(GetEntityCoords(cache.ped))
     if player ~= -1 and distance < 3 then
         if data.inventory == 'player' then
             local playerId = GetPlayerServerId(player)
-            SetCurrentPedWeapon(PlayerPedId(),'WEAPON_UNARMED',true)
+            SetCurrentPedWeapon(cache.ped,'WEAPON_UNARMED',true)
             TriggerServerEvent("inventory:server:GiveItem", playerId, data.item.name, data.amount, data.item.slot)
         else
             QRCore.Functions.Notify(Lang:t("notify.notowned"), "error")
@@ -470,11 +388,10 @@ CreateThread(function()
     while true do
         local sleep = 100
         if DropsNear ~= nil then
-			local ped = PlayerPedId()
+			local ped = cache.ped
 			local closestDrop = nil
 			local closestDistance = nil
             for k, v in pairs(DropsNear) do
-
                 if DropsNear[k] ~= nil then
                     if Config.UseItemDrop then
                         if not v.isDropShowing then
@@ -506,7 +423,7 @@ end)
 CreateThread(function()
     while true do
         if Drops ~= nil and next(Drops) ~= nil then
-            local pos = GetEntityCoords(PlayerPedId(), true)
+            local pos = GetEntityCoords(cache.ped, true)
             for k, v in pairs(Drops) do
                 if Drops[k] ~= nil then
                     local dist = #(pos - vector3(v.coords.x, v.coords.y, v.coords.z))
@@ -530,24 +447,42 @@ end)
 
 --#endregion Threads
 
--- toggle inventory
-CreateThread(function()
-    while true do
-        Wait(0)
-        if IsControlJustReleased(0, Keys['I']) then -- key open inventory I
-			if not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
-				local ped = PlayerPedId()
-				if CurrentDrop ~= 0 then
-					TriggerServerEvent("inventory:server:OpenInventory", "drop", CurrentDrop)
-				else
-					TriggerServerEvent("inventory:server:OpenInventory")
-				end
-			end
+-- Inputs --
+RegisterCommand('closeinv', function()
+    closeInventory()
+end, false)
+
+RegisterCommand('inventory', function()
+    if not inInventory then
+        if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
+			openAnim()
         end
     end
-end)
+end, false)
 
--- toggle hotbar
+RegisterKeyMapping('inventory', Lang:t("inf_mapping.opn_inv"), 'keyboard', 'TAB')
+
+RegisterCommand('hotbar', function()
+    isHotbar = not isHotbar
+    if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
+        ToggleHotbar(isHotbar)
+    end
+end, false)
+
+RegisterKeyMapping('hotbar', Lang:t("inf_mapping.tog_slots"), 'keyboard', 'z')
+
+for i = 1, 6 do
+    RegisterCommand('slot' .. i,function()
+        if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
+            if i == 6 then
+                i = Config.MaxInventorySlots
+            end
+            TriggerServerEvent("inventory:server:UseItemSlot", i)
+        end
+    end, false)
+    RegisterKeyMapping('slot' .. i, Lang:t("inf_mapping.use_item") .. i, 'keyboard', i)
+end
+
 CreateThread(function()
     while true do
         Wait(0)
@@ -557,6 +492,7 @@ CreateThread(function()
         DisableControlAction(0, Keys['4'])
         DisableControlAction(0, Keys['5'])
         DisableControlAction(0, Keys['Z'])
+
         if IsDisabledControlPressed(0, Keys['1']) and IsInputDisabled(0) then  -- 1  slot
 			if not PlayerData.metadata["isdead"] and not PlayerData.metadata["ishandcuffed"] then
 				TriggerServerEvent("inventory:server:UseItemSlot", 1)
@@ -591,5 +527,37 @@ CreateThread(function()
             isHotbar = not isHotbar
             ToggleHotbar(isHotbar)
         end
+
+        if IsControlJustReleased(0, Keys['I']) then -- key open inventory I
+			if not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
+                openAnim()
+			end
+        end
     end
+end)
+
+-- Player / Resource --
+RegisterNetEvent('QRCore:Client:OnPlayerLoaded', function()
+    LocalPlayer.state:set("inv_busy", false, true)
+    PlayerData = QRCore.Functions.GetPlayerData()
+    Drops = lib.callback.await('inventory:server:GetCurrentDrops', false)
+end)
+
+RegisterNetEvent('QRCore:Client:OnPlayerUnload', function()
+    LocalPlayer.state:set("inv_busy", true, true)
+    PlayerData = {}
+    RemoveAllNearbyDrops()
+end)
+
+RegisterNetEvent('QRCore:Client:UpdateObject', function()
+    QRCore = exports['qr-core']:GetCoreObject()
+end)
+
+RegisterNetEvent('QRCore:Player:SetPlayerData', function(val)
+    PlayerData = val
+end)
+
+AddEventHandler('onResourceStop', function(name)
+    if name ~= GetCurrentResourceName() then return end
+    if Config.UseItemDrop then RemoveAllNearbyDrops() end
 end)

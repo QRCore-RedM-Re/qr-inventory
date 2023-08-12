@@ -763,79 +763,7 @@ local function CreateNewDrop(source, fromSlot, toSlot, itemAmount)
 	end
 end
 
---#endregion Functions
-
---#region Events
-
-AddEventHandler('QRCore:Server:PlayerLoaded', function(Player)
-	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "AddItem", function(item, amount, slot, info)
-		return AddItem(Player.PlayerData.source, item, amount, slot, info)
-	end)
-
-	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "RemoveItem", function(item, amount, slot)
-		return RemoveItem(Player.PlayerData.source, item, amount, slot)
-	end)
-
-	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "GetItemBySlot", function(slot)
-		return GetItemBySlot(Player.PlayerData.source, slot)
-	end)
-
-	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "GetItemByName", function(item)
-		return GetItemByName(Player.PlayerData.source, item)
-	end)
-
-	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "GetItemsByName", function(item)
-		return GetItemsByName(Player.PlayerData.source, item)
-	end)
-
-	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "ClearInventory", function(filterItems)
-		ClearInventory(Player.PlayerData.source, filterItems)
-	end)
-
-	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "SetInventory", function(items)
-		SetInventory(Player.PlayerData.source, items)
-	end)
-end)
-
-AddEventHandler('onResourceStart', function(resourceName)
-	if resourceName ~= GetCurrentResourceName() then return end
-	local Players = QRCore.Functions.GetQRPlayers()
-	for k in pairs(Players) do
-		QRCore.Functions.AddPlayerMethod(k, "AddItem", function(item, amount, slot, info)
-			return AddItem(k, item, amount, slot, info)
-		end)
-
-		QRCore.Functions.AddPlayerMethod(k, "RemoveItem", function(item, amount, slot)
-			return RemoveItem(k, item, amount, slot)
-		end)
-
-		QRCore.Functions.AddPlayerMethod(k, "GetItemBySlot", function(slot)
-			return GetItemBySlot(k, slot)
-		end)
-
-		QRCore.Functions.AddPlayerMethod(k, "GetItemByName", function(item)
-			return GetItemByName(k, item)
-		end)
-
-		QRCore.Functions.AddPlayerMethod(k, "GetItemsByName", function(item)
-			return GetItemsByName(k, item)
-		end)
-
-		QRCore.Functions.AddPlayerMethod(k, "ClearInventory", function(filterItems)
-			ClearInventory(k, filterItems)
-		end)
-
-		QRCore.Functions.AddPlayerMethod(k, "SetInventory", function(items)
-			SetInventory(k, items)
-		end)
-	end
-end)
-
-RegisterNetEvent('QRCore:Server:UpdateObject', function()
-    if source ~= '' then return end -- Safety check if the event was not called from the server.
-    QRCore = exports['qr-core']:GetCoreObject()
-end)
-
+-- Events --
 RegisterNetEvent('inventory:server:combineItem', function(item, fromItem, toItem)
 	local src = source
 
@@ -1389,55 +1317,16 @@ end)
 
 --#endregion Events
 
---#region Callbacks
-
-QRCore.Functions.CreateCallback('qr-inventory:server:GetStashItems', function(_, cb, stashId)
-	cb(GetStashItems(stashId))
+-- Callbacks --
+lib.callback.register('qr-inventory:server:GetStashItems', function(source, stashId) 
+	return GetStashItems(stashId)
 end)
 
-QRCore.Functions.CreateCallback('inventory:server:GetCurrentDrops', function(_, cb)
-	cb(Drops)
+lib.callback.register('inventory:server:GetCurrentDrops', function(source)
+	return Drops
 end)
 
-QRCore.Functions.CreateCallback('QRCore:HasItem', function(source, cb, items, amount)
-	print("^3QRCore:HasItem is deprecated, please use QRCore.Functions.HasItem, it can be used on both server- and client-side and uses the same arguments.^0")
-    local retval = false
-    local Player = QRCore.Functions.GetPlayer(source)
-    if not Player then return cb(false) end
-    local isTable = type(items) == 'table'
-    local isArray = isTable and table.type(items) == 'array' or false
-    local totalItems = #items
-    local count = 0
-    local kvIndex = 2
-    if isTable and not isArray then
-        totalItems = 0
-        for _ in pairs(items) do totalItems += 1 end
-        kvIndex = 1
-    end
-    if isTable then
-        for k, v in pairs(items) do
-            local itemKV = {k, v}
-            local item = GetItemByName(source, itemKV[kvIndex])
-            if item and ((amount and item.amount >= amount) or (not amount and not isArray and item.amount >= v) or (not amount and isArray)) then
-                count += 1
-            end
-        end
-        if count == totalItems then
-            retval = true
-        end
-    else -- Single item as string
-        local item = GetItemByName(source, items)
-        if item and not amount or (item and amount and item.amount >= amount) then
-            retval = true
-        end
-    end
-    cb(retval)
-end)
-
---#endregion Callbacks
-
---#region Commands
-
+-- Commands --
 QRCore.Commands.Add("resetinv", "Reset Inventory (Admin Only)", {{name="type", help="stash/trunk/glovebox"},{name="id/plate", help="ID of stash or license plate"}}, true, function(source, args)
 	local invType = args[1]:lower()
 	table.remove(args, 1)
@@ -1534,10 +1423,7 @@ QRCore.Commands.Add('clearinv', 'Clear Players Inventory (Admin Only)', { { name
     end
 end, 'admin')
 
---#endregion Commands
-
---#region Items
-
+-- Items --
 CreateUsableItem("id_card", function(source, item)
 	local playerPed = GetPlayerPed(source)
 	local playerCoords = GetEntityCoords(playerPed)
@@ -1567,10 +1453,7 @@ CreateUsableItem("id_card", function(source, item)
 	end
 end)
 
---#endregion Items
-
---#region Threads
-
+-- Threads --
 CreateThread(function()
 	while true do
 		for k, v in pairs(Drops) do
@@ -1583,4 +1466,71 @@ CreateThread(function()
 	end
 end)
 
---#endregion Threads
+AddEventHandler('QRCore:Server:PlayerLoaded', function(Player)
+	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "AddItem", function(item, amount, slot, info)
+		return AddItem(Player.PlayerData.source, item, amount, slot, info)
+	end)
+
+	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "RemoveItem", function(item, amount, slot)
+		return RemoveItem(Player.PlayerData.source, item, amount, slot)
+	end)
+
+	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "GetItemBySlot", function(slot)
+		return GetItemBySlot(Player.PlayerData.source, slot)
+	end)
+
+	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "GetItemByName", function(item)
+		return GetItemByName(Player.PlayerData.source, item)
+	end)
+
+	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "GetItemsByName", function(item)
+		return GetItemsByName(Player.PlayerData.source, item)
+	end)
+
+	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "ClearInventory", function(filterItems)
+		ClearInventory(Player.PlayerData.source, filterItems)
+	end)
+
+	QRCore.Functions.AddPlayerMethod(Player.PlayerData.source, "SetInventory", function(items)
+		SetInventory(Player.PlayerData.source, items)
+	end)
+end)
+
+AddEventHandler('onResourceStart', function(resourceName)
+	if resourceName ~= GetCurrentResourceName() then return end
+	local Players = QRCore.Functions.GetQRPlayers()
+	for k in pairs(Players) do
+		QRCore.Functions.AddPlayerMethod(k, "AddItem", function(item, amount, slot, info)
+			return AddItem(k, item, amount, slot, info)
+		end)
+
+		QRCore.Functions.AddPlayerMethod(k, "RemoveItem", function(item, amount, slot)
+			return RemoveItem(k, item, amount, slot)
+		end)
+
+		QRCore.Functions.AddPlayerMethod(k, "GetItemBySlot", function(slot)
+			return GetItemBySlot(k, slot)
+		end)
+
+		QRCore.Functions.AddPlayerMethod(k, "GetItemByName", function(item)
+			return GetItemByName(k, item)
+		end)
+
+		QRCore.Functions.AddPlayerMethod(k, "GetItemsByName", function(item)
+			return GetItemsByName(k, item)
+		end)
+
+		QRCore.Functions.AddPlayerMethod(k, "ClearInventory", function(filterItems)
+			ClearInventory(k, filterItems)
+		end)
+
+		QRCore.Functions.AddPlayerMethod(k, "SetInventory", function(items)
+			SetInventory(k, items)
+		end)
+	end
+end)
+
+RegisterNetEvent('QRCore:Server:UpdateObject', function()
+    if source ~= '' then return end -- Safety check if the event was not called from the server.
+    QRCore = exports['qr-core']:GetCoreObject()
+end)
