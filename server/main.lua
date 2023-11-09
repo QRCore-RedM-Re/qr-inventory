@@ -801,6 +801,32 @@ RegisterNetEvent('inventory:server:SetIsOpenState', function(IsOpen, type, id)
 	end
 end)
 
+-- Admin Open Inventory from Server --
+AddEventHandler('inventory:server:adminOpenPlayerInventoy', function(adminSource, targetID)
+	local src = adminSource
+	local ply = Player(src)
+	local Player = QRCore.Functions.GetPlayer(src)
+
+	if QRCore.Functions.HasPermission(src, 'admin') then
+		if not ply.state.inv_busy then
+			if src and targetID then
+				local secondInv = {}
+				local OtherPlayer = QRCore.Functions.GetPlayer(tonumber(targetID))
+				if OtherPlayer then
+					secondInv.name = "otherplayer-"..targetID
+					secondInv.label = "Player-"..targetID
+					secondInv.maxweight = Config.MaxInventoryWeight
+					secondInv.inventory = OtherPlayer.PlayerData.items
+					secondInv.slots = Config.MaxInventorySlots
+					Wait(250)
+				end
+				TriggerClientEvent("qr-inventory:client:closeinv", targetID)
+				TriggerClientEvent("inventory:client:OpenInventory", src, {}, Player.PlayerData.items, secondInv)
+			end
+		end
+	end
+end)
+
 RegisterNetEvent('inventory:server:OpenInventory', function(name, id, other)
 	local src = source
 	local ply = Player(src)
@@ -1318,7 +1344,7 @@ end)
 --#endregion Events
 
 -- Callbacks --
-lib.callback.register('qr-inventory:server:GetStashItems', function(source, stashId) 
+lib.callback.register('qr-inventory:server:GetStashItems', function(source, stashId)
 	return GetStashItems(stashId)
 end)
 
